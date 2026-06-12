@@ -1,0 +1,21 @@
+# JetBrains IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Node (au cas où des outils front seraient ajoutés)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Variables d'environnement
+.env
+.env.*
+!.env.example

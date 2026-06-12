@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RER C &#x2014; Prochains passages &#xB7; Orly Ville</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --panel:#ffffff;
+    --line-c:#ffcd00;         /* jaune officiel RER C */
+    --navy:#1b2440;           /* texte principal */
+    --ink:#1b2440;
+    --ink-dim:#5d6b85;
+    --border:#e2e6ee;
+    --row-alt:#f7f8fb;
+    --ok:#1e9e57;
+    --warn:#b26a00;
+    --bad:#c93b3b;
+    --radius:14px;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--ink);
+    display:flex;justify-content:center;
+    padding:18px 12px 48px;
+  }
+  .app{width:100%;max-width:680px}
+
+  header{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 16px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius) var(--radius) 0 0;
+    border-bottom:3px solid var(--line-c);
+  }
+  .pill-c{
+    flex:none;width:46px;height:46px;border-radius:50%;
+    background:var(--line-c);color:var(--navy);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:26px;
+    box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--line-c);
+  }
+  .head-txt h1{font-size:17px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+  .head-txt p{font-size:12.5px;color:var(--ink-dim);margin-top:2px}
+  .clock{
+    margin-left:auto;font-family:var(--mono);font-size:22px;font-weight:700;
+    color:var(--navy);letter-spacing:.06em;font-variant-numeric:tabular-nums;
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);border-top:none;
+    border-radius:0 0 var(--radius) var(--radius);
+    overflow:hidden;
+    box-shadow:0 8px 24px rgba(27,36,64,.06);
+  }
+  .controls{padding:14px 16px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--border)}
+
+  .chip{
+    font:600 13px var(--sans);
+    padding:8px 13px;border-radius:999px;cursor:pointer;
+    background:#fff;border:1px solid #cdd5e2;color:var(--ink-dim);
+    transition:all .15s ease;
+  }
+  .chip:hover{border-color:var(--navy);color:var(--ink)}
+  .chip.on{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:700}
+  .chip:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+
+  .ctl-group{display:flex;flex-direction:column;gap:6px}
+  .ctl-group > .lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+
+  /* Gare : commande segmentee, l'etat actif reprend le jaune de la ligne */
+  .seg{display:flex;flex-wrap:wrap;gap:3px;align-self:flex-start;
+       background:#eef1f6;border:1px solid var(--border);border-radius:11px;padding:3px}
+  .seg button{
+    font:600 13px var(--sans);
+    padding:8px 14px;border:none;border-radius:8px;cursor:pointer;
+    background:transparent;color:var(--ink-dim);
+    transition:all .15s ease;
+  }
+  .seg button:hover{color:var(--ink)}
+  .seg button.on{background:var(--line-c);color:var(--navy);font-weight:800;
+                 box-shadow:0 1px 3px rgba(27,36,64,.18)}
+  .seg button:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+
+  .keyrow{display:flex;gap:8px}
+  .keyrow[hidden],.hint[hidden]{display:none}
+  .keyrow input{
+    flex:1;min-width:0;
+    font:14px var(--mono);
+    padding:10px 12px;border-radius:9px;
+    background:#fff;border:1px solid #cdd5e2;color:var(--ink);
+  }
+  .keyrow input::placeholder{color:#9aa6ba}
+  .keyrow input:focus{outline:2px solid var(--navy);outline-offset:1px;border-color:var(--navy)}
+  button.go{
+    font:700 14px var(--sans);
+    padding:10px 18px;border-radius:9px;border:none;cursor:pointer;
+    background:var(--navy);color:#fff;
+    transition:transform .1s ease;
+  }
+  button.go:hover{transform:translateY(-1px)}
+  button.go:focus-visible{outline:2px solid var(--line-c);outline-offset:2px}
+  .hint{font-size:12px;color:var(--ink-dim);line-height:1.5}
+  .hint a{color:var(--navy)}
+
+  /* Direction : pilules rondes, l'etat actif en bleu marine */
+  .filters[hidden]{display:none}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+
+  .board-head{
+    display:grid;grid-template-columns:64px 1fr 92px 86px;gap:10px;
+    padding:9px 16px;font-size:10.5px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-dim);
+    background:#f0f2f6;border-bottom:1px solid var(--border);
+  }
+  .rows{min-height:120px}
+  .dep{
+    display:grid;grid-template-columns:64px 1fr 92px 86px;gap:10px;align-items:center;
+    padding:13px 16px;border-bottom:1px solid var(--border);
+    animation:slide .25s ease both;
+  }
+  .dep:nth-child(odd){background:var(--row-alt)}
+  @keyframes slide{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.dep{animation:none}}
+
+  .mission{
+    font:700 14px var(--mono);color:var(--navy);
+    background:var(--line-c);border-radius:6px;
+    padding:5px 0;text-align:center;letter-spacing:.08em;
+  }
+  .dest{font-weight:700;font-size:15px;line-height:1.25}
+  .dest small{display:block;font-weight:500;font-size:11.5px;color:var(--ink-dim);margin-top:2px}
+  .hor{font:700 17px var(--mono);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+  .wait{font:700 15px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+  .wait .min{font-size:11px;color:var(--ink-dim);font-weight:500;margin-left:3px}
+  .wait .now{color:var(--ok)}
+  .st-onTime{color:var(--ok)} .st-delayed{color:var(--warn)} .st-cancelled{color:var(--bad);text-decoration:line-through}
+  .badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;border-radius:4px;padding:2px 6px;margin-top:3px}
+  .badge.delayed{background:#fdf0dc;color:var(--warn)}
+  .badge.cancelled{background:#fdeaea;color:var(--bad)}
+  .badge.atstop{background:#e3f5ea;color:var(--ok)}
+
+  .empty{padding:36px 20px;text-align:center;color:var(--ink-dim);font-size:14px;line-height:1.6}
+  .empty strong{color:var(--ink)}
+  .err{
+    margin:14px 16px;padding:12px 14px;border-radius:9px;
+    background:#fdeef0;border:1px solid #f1c4cb;color:#a32f3f;
+    font-size:13px;line-height:1.55;
+  }
+  .err code{font-family:var(--mono);font-size:12px}
+
+  footer{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:11px 16px;font-size:11.5px;color:var(--ink-dim);
+    border-top:1px solid var(--border);flex-wrap:wrap;
+  }
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#c2cbda;margin-right:6px;vertical-align:1px}
+  .dot.live{background:var(--ok)}
+  footer button{
+    background:none;border:1px solid #cdd5e2;color:var(--ink-dim);
+    font:600 11.5px var(--sans);padding:5px 10px;border-radius:7px;cursor:pointer;
+  }
+  footer button:hover{color:var(--ink);border-color:var(--navy)}
+
+  @media (max-width:480px){
+    .board-head,.dep{grid-template-columns:52px 1fr 78px}
+    .board-head span:nth-child(3),.hor{display:none}
+    .clock{font-size:18px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="pill-c" aria-hidden="true">C</div>
+    <div class="head-txt">
+      <h1>Prochains passages</h1>
+      <p id="stationLabel">RER C &#xB7; Orly Ville</p>
+    </div>
+    <div class="clock" id="clock">--:--</div>
+  </header>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="ctl-group">
+        <span class="lbl">Gare</span>
+        <div class="seg" id="stations" role="tablist" aria-label="Choix de la gare"></div>
+      </div>
+      <div class="keyrow" id="keyrow">
+        <input id="apikey" type="password" autocomplete="off" spellcheck="false"
+               placeholder="Cl&#xE9; API PRIM (gratuite)" aria-label="Cl&#xE9; API PRIM">
+        <button class="go" id="loadBtn">Afficher</button>
+      </div>
+      <p class="hint" id="keyHint">
+        Les horaires temps r&#xE9;el viennent de l'API PRIM d'&#xCE;le-de-France Mobilit&#xE9;s &#x2014;
+        cl&#xE9; gratuite sur <a href="https://prim.iledefrance-mobilites.fr" target="_blank" rel="noopener">prim.iledefrance-mobilites.fr</a>.
+      </p>
+      <div class="filters ctl-group" id="filters" hidden>
+        <span class="lbl">Direction</span>
+        <div class="chips" id="dirChips"></div>
+      </div>
+    </div>
+
+    <div class="board-head" aria-hidden="true">
+      <span>Train</span><span>Destination</span><span>Heure</span><span style="text-align:right">Attente</span>
+    </div>
+    <div class="rows" id="rows">
+      <div class="empty">Chargement&#x2026;</div>
+    </div>
+
+    <footer>
+      <span id="status"><span class="dot"></span>D&#xE9;marrage</span>
+      <span id="updated"></span>
+      <button id="keyToggle" type="button" aria-expanded="false">Cl&#xE9; API</button>
+      <button id="refreshBtn" hidden>Actualiser</button>
+    </footer>
+  </div>
+</div>
+
+<script>
+(() => {
+  const DEFAULT_KEY = 'rZVuA3k1bkkQe0Qy57QwYiNBLZ3kTjuT';
+
+  const LINE_ID = 'C01727';                       // RER C dans le r\u00e9f\u00e9rentiel IDFM
+  const LINE_REF = 'STIF:Line::' + LINE_ID + ':';
+  const ODS = 'https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/arrets-lignes/records';
+  const PRIM = 'https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring';
+  const ST_ORLY = { key:'ORLY', label:'Orly Ville',        match:/orly[\s-]?ville/i };
+  const ST_VLR  = { key:'VLR',  label:'Villeneuve-le-Roi', match:/villeneuve[\s-]?le[\s-]?roi/i };
+  // \u00c0 BFM : trains vers Austerlitz (nord) + trains desservant Orly Ville ou
+  // Villeneuve-le-Roi (sud) ; les semi-directs qui ne desservent ni l'une ni
+  // l'autre sont \u00e9cart\u00e9s.
+  const ST_BFM  = { key:'BFM', label:'Biblioth\u00e8que Fran\u00e7ois Mitterrand', match:/mitterrand/i,
+                    via:[ST_ORLY, ST_VLR] };
+  const STATIONS = [ST_ORLY, ST_VLR, ST_BFM];
+
+  // Directions fixes propos\u00e9es pour chaque gare
+  ST_ORLY.dirs = [
+    { label:'Paris',                                  test:v => isParisBound(v.dest) },
+    { label:'Pont de Rungis A\u00e9roport d\'Orly', test:v => !isParisBound(v.dest) },
+  ];
+  ST_VLR.dirs = [
+    { label:'Paris',  test:v => isParisBound(v.dest) },
+    { label:'Juvisy', test:v => !isParisBound(v.dest) },
+  ];
+  ST_BFM.dirs = [
+    { label:'Austerlitz',        test:v => isParisBound(v.dest) },
+    { label:'Orly Ville',        test:v => v.serves && v.serves.has('ORLY') },
+    { label:'Villeneuve-le-Roi', test:v => v.serves && v.serves.has('VLR') },
+  ];
+
+  let current = STATIONS[0];
+  let apiKey = '';
+  let timer = null;
+  let allVisits = [];
+  let activeDest = 'ALL';
+  let usedProxy = false;
+
+  const $ = id => document.getElementById(id);
+  const rows = $('rows'), filters = $('filters'), statusEl = $('status'), updatedEl = $('updated');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  /* \u2500\u2500 Horloge \u2500\u2500 */
+  function tickClock(){
+    $('clock').textContent = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  }
+  tickClock(); setInterval(tickClock, 10_000);
+
+  /* \u2500\u2500 Appel direct, puis repli automatique via proxy CORS public si bloqu\u00e9 \u2500\u2500 */
+  async function smartFetch(url, opts){
+    try {
+      return await fetch(url, opts);
+    } catch (e) {
+      if (!(e instanceof TypeError)) throw e;
+      const r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url), opts);
+      usedProxy = true;
+      return r;
+    }
+  }
+
+  /* D\u00e9codage JSON robuste : certaines r\u00e9ponses (souvent via proxy) arrivent
+     en Latin-1/Windows-1252 ; si le d\u00e9codage UTF-8 produit des caract\u00e8res de
+     remplacement (\ufffd), on red\u00e9code dans le bon jeu. */
+  async function readJson(r){
+    const buf = await r.arrayBuffer();
+    let txt;
+    try { txt = new TextDecoder('utf-8', { fatal:true }).decode(buf); }
+    catch (e) { txt = new TextDecoder('windows-1252').decode(buf); }
+    return JSON.parse(txt);
+  }
+
+  /* R\u00e9paration des noms d\u00e9j\u00e0 corrompus en amont (\ufffd ins\u00e9r\u00e9 par le proxy) :
+     on fait correspondre le nom, \ufffd servant de joker, \u00e0 la liste canonique
+     des gares et terminus du RER C. Sans correspondance unique, on ne touche rien. */
+  const CANONICAL = ['Pontoise','Montigny - Beauchamp','Ermont - Eaubonne','Saint-Ouen','Paris Austerlitz','Invalides','Avenue Henri Martin','Mus\u00e9e d\'Orsay','Saint-Michel Notre-Dame','Javel','Versailles Ch\u00e2teau Rive Gauche','Saint-Quentin-en-Yvelines','Chaville - V\u00e9lizy','Versailles Chantiers','Massy - Palaiseau','Pont de Rungis A\u00e9roport d\'Orly','Pont de Rungis - A\u00e9roport d\'Orly','Juvisy','Br\u00e9tigny','Dourdan','Dourdan - La For\u00eat','Saint-Martin d\'\u00c9tampes','\u00c9tampes','Orly Ville','Les Saules','Choisy-le-Roi','Villeneuve-le-Roi','Biblioth\u00e8que Fran\u00e7ois Mitterrand'];
+  function repairName(name){
+    if (!name || !name.includes('\ufffd')) return name;
+    const pat = new RegExp('^' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\ufffd/g, '.') + '$', 'i');
+    const hits = CANONICAL.filter(c => pat.test(c));
+    return hits.length === 1 ? hits[0] : name;
+  }
+
+  /* \u2500\u2500 S\u00e9lecteur de gares \u2500\u2500 */
+  function renderStations(){
+    const box = $('stations'); box.innerHTML = '';
+    STATIONS.forEach(s => {
+      const b = document.createElement('button');
+      b.className = s === current ? 'on' : '';
+      b.type = 'button'; b.textContent = s.label;
+      b.setAttribute('role','tab');
+      b.setAttribute('aria-selected', String(s === current));
+      b.onclick = () => {
+        current = s; activeDest = 'ALL';
+        $('stationLabel').textContent = 'RER C \u00b7 ' + s.label;
+        renderStations();
+        if (apiKey) load();
+      };
+      box.appendChild(b);
+    });
+  }
+
+  /* \u2500\u2500 R\u00e9solution des arr\u00eats via l'open data IDFM (sans cl\u00e9) \u2500\u2500 */
+  let stopsResolved = false;
+  async function resolveStops(){
+    if (stopsResolved) return;
+    const where = encodeURIComponent(`id="IDFM:${LINE_ID}"`);
+    const url = `${ODS}?where=${where}&limit=100&select=stop_id,stop_name`;
+    const r = await smartFetch(url);
+    if (!r.ok) throw new Error('open data ' + r.status);
+    const data = await readJson(r);
+    const list = data.results || [];
+    for (const s of STATIONS){
+      const hit = list.find(x => s.match.test(x.stop_name || ''));
+      const num = hit && String(hit.stop_id || '').match(/(\d+)\s*$/);
+      if (num) s.monitoringRef = `STIF:StopArea:SP:${num[1]}:`;
+    }
+    if (!STATIONS.some(s => s.monitoringRef)) throw new Error('STOP');
+    stopsResolved = true;
+  }
+
+  /* \u2500\u2500 Appel PRIM \u2500\u2500 */
+  async function fetchDepartures(ref, windowMs = 60 * 60_000){
+    const url = `${PRIM}?MonitoringRef=${encodeURIComponent(ref)}&LineRef=${encodeURIComponent(LINE_REF)}`;
+    const r = await smartFetch(url, { headers: { apikey: apiKey } });
+    if (r.status === 401 || r.status === 403) throw new Error('AUTH');
+    if (!r.ok) throw new Error('PRIM ' + r.status);
+    const data = await readJson(r);
+    const deliveries = data?.Siri?.ServiceDelivery?.StopMonitoringDelivery || [];
+    const visits = deliveries.flatMap(d => d.MonitoredStopVisit || []);
+    const first = a => Array.isArray(a) ? (a[0]?.value ?? a[0]) : (a?.value ?? a);
+    return visits.map(v => {
+      const j = v.MonitoredVehicleJourney || {};
+      const call = j.MonitoredCall || {};
+      const dt = call.ExpectedDepartureTime || call.AimedDepartureTime
+              || call.ExpectedArrivalTime  || call.AimedArrivalTime;
+      return {
+        ref: j.FramedVehicleJourneyRef?.DatedVehicleJourneyRef || null, // identifiant de course
+        mission: first(j.JourneyNote) || '\u2014',
+        dest: repairName(first(j.DestinationName) || first(j.DirectionName)) || 'Destination inconnue',
+        time: dt ? new Date(dt) : null,
+        status: call.DepartureStatus || call.ArrivalStatus || '',
+        atStop: call.VehicleAtStop === true,
+      };
+    }).filter(x => {
+      if (!x.time) return false;
+      const t = x.time.getTime(), now = Date.now();
+      return t > now - 60_000 && t <= now + windowMs;
+    })
+      .sort((a,b) => a.time - b.time);
+  }
+
+  /* \u2500\u2500 Marquage de desserte (gare BFM) \u2500\u2500
+     L'API ne donne pas la desserte aval d'un train ; on interroge donc aussi
+     les tableaux d'Orly Ville et de Villeneuve-le-Roi. Chaque course de BFM
+     qui y figure avec un horaire post\u00e9rieur est marqu\u00e9e (v.serves) avec la
+     branche correspondante. On conserve : les trains vers le nord (Paris /
+     Austerlitz) et les trains marqu\u00e9s ; les semi-directs sud sont \u00e9cart\u00e9s. */
+  let viaFilterDown = false;
+  async function filterViaStops(list, targets){
+    viaFilterDown = false;
+    const usable = targets.filter(t => t.monitoringRef);
+    if (!usable.length) { viaFilterDown = true; return list; }
+    try {
+      const boards = await Promise.all(usable.map(t => fetchDepartures(t.monitoringRef, 2 * 60 * 60_000)));
+      boards.forEach((board, i) => {
+        const at = new Map(board.filter(c => c.ref).map(c => [c.ref, c.time.getTime()]));
+        for (const v of list){
+          if (v.ref && at.has(v.ref) && at.get(v.ref) > v.time.getTime()){
+            (v.serves || (v.serves = new Set())).add(usable[i].key);
+          }
+        }
+      });
+      return list.filter(v => isParisBound(v.dest) || (v.serves && v.serves.size));
+    } catch (e) {
+      viaFilterDown = true;
+      return list; // en cas d'\u00e9chec, on affiche tout plut\u00f4t qu'un tableau vide
+    }
+  }
+
+  /* \u2500\u2500 Filtres direction \u2500\u2500 */
+  // Terminus nord dont la course traverse Paris depuis les gares du secteur.
+  // \u00ab Versailles Chantiers \u00bb (via Massy) n'y passe pas, d'o\u00f9 le motif pr\u00e9cis
+  // \u00ab versailles ch\u00e2teau / rive gauche \u00bb.
+  const PARIS_BOUND = /pontoise|montigny|beauchamp|invalides|austerlitz|mus[\u00e9e]e d'orsay|versailles[\s-]ch[\u00e2a]teau|rive gauche|saint[\s-]quentin|chaville|v[\u00e9e]lizy|henri[\s-]martin|boulainvilliers|saint[\s-]ouen|ermont|eaubonne/i;
+  const isParisBound = dest => PARIS_BOUND.test(dest);
+
+  function renderFilters(){
+    const dirs = current.dirs || [];
+    filters.hidden = !dirs.length;
+    const box = $('dirChips'); box.innerHTML = '';
+    const mk = (label, val) => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (activeDest === val ? ' on' : '');
+      b.type = 'button'; b.textContent = label;
+      b.onclick = () => { activeDest = val; renderFilters(); renderRows(); };
+      box.appendChild(b);
+    };
+    mk('Toutes', 'ALL');
+    dirs.forEach((d, i) => mk(d.label, String(i)));
+  }
+
+  /* \u2500\u2500 Rendu du tableau \u2500\u2500 */
+  function renderRows(){
+    const now = Date.now();
+    const dir = activeDest === 'ALL' ? null : (current.dirs || [])[Number(activeDest)];
+    const list = allVisits.filter(v => !dir || dir.test(v)).slice(0, 12);
+    if (!list.length){
+      const what = dir ? 'Aucun train vers ' + esc(dir.label) + ' dans l\'heure \u00e0 venir \u00e0'
+                       : 'Aucun passage dans l\'heure \u00e0 venir \u00e0';
+      rows.innerHTML = '<div class="empty">' + what + ' <strong>' +
+        esc(current.label) + '</strong>.<br>Service peut-\u00eatre termin\u00e9 ou interrompu \u2014 v\u00e9rifiez l\'info trafic.</div>';
+      return;
+    }
+    rows.innerHTML = list.map(v => {
+      const mins = Math.max(0, Math.round((v.time - now) / 60000));
+      const hh = v.time.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      const stCls = v.status === 'delayed' ? 'st-delayed' : v.status === 'cancelled' ? 'st-cancelled' : 'st-onTime';
+      let badge = '';
+      if (v.status === 'cancelled') badge = '<span class="badge cancelled">Supprim\u00e9</span>';
+      else if (v.status === 'delayed') badge = '<span class="badge delayed">Retard\u00e9</span>';
+      else if (v.atStop) badge = '<span class="badge atstop">\u00c0 quai</span>';
+      const wait = v.status === 'cancelled' ? '\u2014'
+        : mins === 0 ? '<span class="now">\u00e0 quai</span>'
+        : mins + '<span class="min">min</span>';
+      return `<div class="dep">
+        <span class="mission">${esc(v.mission)}</span>
+        <span class="dest">${esc(v.dest)}${badge ? '<small>'+badge+'</small>' : ''}</span>
+        <span class="hor ${stCls}">${hh}</span>
+        <span class="wait">${wait}</span>
+      </div>`;
+    }).join('');
+  }
+
+  /* \u2500\u2500 Cycle de chargement \u2500\u2500 */
+  async function load(){
+    setStatus('Chargement\u2026', false);
+    rows.innerHTML = '<div class="empty">Interrogation du r\u00e9seau\u2026</div>';
+    clearError();
+    try {
+      await resolveStops();
+      if (!current.monitoringRef) throw new Error('STOP');
+      allVisits = await fetchDepartures(current.monitoringRef);
+      if (current.via) allVisits = await filterViaStops(allVisits, current.via);
+      renderFilters();
+      renderRows();
+      setStatus('Temps r\u00e9el', true);
+      updatedEl.textContent = 'Mis \u00e0 jour \u00e0 ' + new Date().toLocaleTimeString('fr-FR')
+        + (usedProxy ? ' \u00b7 via proxy CORS' : '')
+        + (current.via && viaFilterDown ? ' \u00b7 filtre desserte indisponible' : '');
+      $('refreshBtn').hidden = false;
+      clearInterval(timer);
+      timer = setInterval(load, 60_000);
+    } catch (e) {
+      clearInterval(timer);
+      setStatus('Erreur', false);
+      if (e.message === 'AUTH'){
+        showError("Cl\u00e9 API refus\u00e9e (401/403). V\u00e9rifiez votre jeton PRIM \u2014 il doit \u00eatre actif et copi\u00e9 sans espace.");
+      } else if (e.message === 'STOP'){
+        showError("Impossible de retrouver l'identifiant de cette gare dans l'open data IDFM. R\u00e9essayez dans un instant.");
+      } else if (e instanceof TypeError){
+        showError("Appels r\u00e9seau bloqu\u00e9s par l'environnement. C'est normal dans l'aper\u00e7u int\u00e9gr\u00e9 de Claude, qui interdit toute requ\u00eate externe. <strong>T\u00e9l\u00e9chargez ce fichier HTML et ouvrez-le directement dans votre navigateur</strong> : l'app appellera alors l'API directement, avec repli automatique via un proxy si n\u00e9cessaire.");
+      } else {
+        showError("Erreur lors de l'appel \u00e0 l'API : <code>" + esc(e.message) + "</code>. R\u00e9essayez dans une minute.");
+      }
+      rows.innerHTML = '<div class="empty">Pas de donn\u00e9es \u00e0 afficher.</div>';
+    }
+  }
+  function setStatus(txt, live){
+    statusEl.innerHTML = '<span class="dot' + (live ? ' live' : '') + '"></span>' + esc(txt);
+  }
+  let errEl = null;
+  function showError(html){
+    clearError();
+    errEl = document.createElement('div');
+    errEl.className = 'err'; errEl.innerHTML = html;
+    rows.parentNode.insertBefore(errEl, rows);
+  }
+  function clearError(){ if (errEl){ errEl.remove(); errEl = null; } }
+
+  /* \u2500\u2500 \u00c9v\u00e9nements \u2500\u2500 */
+  $('loadBtn').onclick = () => {
+    apiKey = $('apikey').value.trim();
+    if (!apiKey){ $('apikey').focus(); return; }
+    load();
+  };
+  $('apikey').addEventListener('keydown', e => { if (e.key === 'Enter') $('loadBtn').click(); });
+  $('refreshBtn').onclick = load;
+
+  renderStations();
+  function setKeyVisible(v){
+    $('keyrow').hidden = !v;
+    $('keyHint').hidden = !v;
+    $('keyToggle').setAttribute('aria-expanded', String(v));
+  }
+  $('keyToggle').onclick = () => setKeyVisible($('keyrow').hidden);
+
+  if (DEFAULT_KEY){
+    apiKey = DEFAULT_KEY;
+    $('apikey').value = DEFAULT_KEY;
+    $('keyHint').textContent = 'Votre cl\u00e9 PRIM est int\u00e9gr\u00e9e \u2014 le tableau se charge automatiquement. Vous pouvez la remplacer ci-dessus si besoin.';
+    setKeyVisible(false); // section discr\u00e8te : accessible via \u00ab Cl\u00e9 API \u00bb en pied de page
+    load();
+  } else {
+    setKeyVisible(true);
+    resolveStops().catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
