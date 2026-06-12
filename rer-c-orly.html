@@ -229,7 +229,9 @@
 
 <script>
 (() => {
-  const DEFAULT_KEY = 'rZVuA3k1bkkQe0Qy57QwYiNBLZ3kTjuT';
+  const KEY_STORE = 'prim-api-key';
+  const getStoredKey = () => { try { return localStorage.getItem(KEY_STORE) || ''; } catch (e) { return ''; } };
+  const setStoredKey = k => { try { k ? localStorage.setItem(KEY_STORE, k) : localStorage.removeItem(KEY_STORE); } catch (e) {} };
 
   const LINE_ID = 'C01727';                       // RER C dans le r\u00e9f\u00e9rentiel IDFM
   const LINE_REF = 'STIF:Line::' + LINE_ID + ':';
@@ -516,6 +518,8 @@
   $('loadBtn').onclick = () => {
     apiKey = $('apikey').value.trim();
     if (!apiKey){ $('apikey').focus(); return; }
+    setStoredKey(apiKey);            // sauvegarde dans le navigateur pour les prochaines visites
+    setKeyVisible(false);
     load();
   };
   $('apikey').addEventListener('keydown', e => { if (e.key === 'Enter') $('loadBtn').click(); });
@@ -529,10 +533,11 @@
   }
   $('keyToggle').onclick = () => setKeyVisible($('keyrow').hidden);
 
-  if (DEFAULT_KEY){
-    apiKey = DEFAULT_KEY;
-    $('apikey').value = DEFAULT_KEY;
-    $('keyHint').textContent = 'Votre cl\u00e9 PRIM est int\u00e9gr\u00e9e \u2014 le tableau se charge automatiquement. Vous pouvez la remplacer ci-dessus si besoin.';
+  const storedKey = getStoredKey();
+  if (storedKey){
+    apiKey = storedKey;
+    $('apikey').value = storedKey;
+    $('keyHint').textContent = 'Votre cl\u00e9 PRIM est enregistr\u00e9e dans ce navigateur \u2014 le tableau se charge automatiquement. Vous pouvez la remplacer ci-dessus si besoin.';
     setKeyVisible(false); // section discr\u00e8te : accessible via \u00ab Cl\u00e9 API \u00bb en pied de page
     load();
   } else {
