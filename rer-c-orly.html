@@ -236,18 +236,23 @@
   const ODS = 'https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/arrets-lignes/records';
   const PRIM = 'https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring';
   const ST_ORLY = { key:'ORLY', label:'Orly Ville',        match:/orly[\s-]?ville/i };
+  const ST_PDR  = { key:'PDR',  label:'Pont de Rungis',    match:/pont[\s-]?de[\s-]?rungis/i };
   const ST_VLR  = { key:'VLR',  label:'Villeneuve-le-Roi', match:/villeneuve[\s-]?le[\s-]?roi/i };
   // \u00c0 BFM : trains vers Austerlitz (nord) + trains desservant Orly Ville ou
   // Villeneuve-le-Roi (sud) ; les semi-directs qui ne desservent ni l'une ni
   // l'autre sont \u00e9cart\u00e9s.
   const ST_BFM  = { key:'BFM', label:'Biblioth\u00e8que Fran\u00e7ois Mitterrand', match:/mitterrand/i,
                     via:[ST_ORLY, ST_VLR] };
-  const STATIONS = [ST_ORLY, ST_VLR, ST_BFM];
+  const STATIONS = [ST_ORLY, ST_PDR, ST_VLR, ST_BFM];
 
   // Directions fixes propos\u00e9es pour chaque gare
   ST_ORLY.dirs = [
     { label:'Paris',                                  test:v => isParisBound(v.dest) },
     { label:'Pont de Rungis A\u00e9roport d\'Orly', test:v => !isParisBound(v.dest) },
+  ];
+  ST_PDR.dirs = [
+    { label:'Paris',             test:v => isParisBound(v.dest) },
+    { label:'Massy - Palaiseau', test:v => !isParisBound(v.dest) },
   ];
   ST_VLR.dirs = [
     { label:'Paris',  test:v => isParisBound(v.dest) },
