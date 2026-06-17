@@ -2,13 +2,15 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>RER C &#x2014; Prochains passages &#xB7; Orly Ville</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Ccircle%20cx='32'%20cy='32'%20r='30'%20fill='%23ffcd00'/%3E%3Ctext%20x='32'%20y='33'%20font-family='Archivo,Arial,sans-serif'%20font-size='42'%20font-weight='900'%20fill='%231b2440'%20text-anchor='middle'%20dominant-baseline='central'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="RER C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141a2e">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -35,25 +37,27 @@
     font-family:var(--sans);
     background:var(--bg);
     color:var(--ink);
-    display:flex;justify-content:center;
-    padding:18px 12px 48px;
+    min-height:100dvh;
+    -webkit-text-size-adjust:100%;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
   }
-  .app{width:100%;max-width:680px}
+  /* Mobile first : l'app occupe tout l'écran, le pied colle au bas */
+  .app{width:100%;min-height:100dvh;display:flex;flex-direction:column}
 
   header{
+    position:sticky;top:0;z-index:10;
     display:flex;align-items:center;gap:14px;
-    padding:14px 16px;
+    padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 12px max(16px,env(safe-area-inset-left));
     background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:var(--radius) var(--radius) 0 0;
     border-bottom:3px solid var(--line-c);
   }
   .pill-c{
     flex:none;width:46px;height:46px;border-radius:50%;
-    background:var(--line-c);color:var(--navy);
+    background:var(--line-c);color:#1b2440;
     display:flex;align-items:center;justify-content:center;
     font-weight:900;font-size:26px;
-    box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--line-c);
+    box-shadow:0 0 0 3px var(--panel), 0 0 0 5px var(--line-c);
   }
   .head-txt h1{font-size:17px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
   .head-txt p{font-size:12.5px;color:var(--ink-dim);margin-top:2px}
@@ -64,34 +68,38 @@
 
   .panel{
     background:var(--panel);
-    border:1px solid var(--border);border-top:none;
-    border-radius:0 0 var(--radius) var(--radius);
     overflow:hidden;
-    box-shadow:0 8px 24px rgba(27,36,64,.06);
+    flex:1;display:flex;flex-direction:column;
   }
-  .controls{padding:14px 16px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--border)}
+  .controls{padding:10px max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--border)}
 
   .chip{
+    flex:0 0 auto;white-space:nowrap;
     font:600 13px var(--sans);
-    padding:8px 13px;border-radius:999px;cursor:pointer;
-    background:#fff;border:1px solid #cdd5e2;color:var(--ink-dim);
-    transition:all .15s ease;
+    min-height:34px;padding:6px 14px;border-radius:999px;cursor:pointer;
+    display:inline-flex;align-items:center;
+    background:var(--panel);border:1px solid #cdd5e2;color:var(--ink-dim);
+    transition:all .15s ease;-webkit-tap-highlight-color:transparent;
   }
   .chip:hover{border-color:var(--navy);color:var(--ink)}
   .chip.on{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:700}
   .chip:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
 
-  .ctl-group{display:flex;flex-direction:column;gap:6px}
-  .ctl-group > .lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+  .ctl-group{display:flex;flex-direction:column;gap:4px}
+  .ctl-group > .lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
 
   /* Gare : commande segmentee, l'etat actif reprend le jaune de la ligne */
-  .seg{display:flex;flex-wrap:wrap;gap:3px;align-self:flex-start;
-       background:#eef1f6;border:1px solid var(--border);border-radius:11px;padding:3px}
+  /* Une seule ligne, défilable horizontalement : gain de hauteur */
+  .seg{display:flex;flex-wrap:nowrap;gap:3px;overflow-x:auto;
+       scrollbar-width:none;-webkit-overflow-scrolling:touch;
+       background:#eef1f6;border:1px solid var(--border);border-radius:10px;padding:3px}
+  .seg::-webkit-scrollbar{display:none}
   .seg button{
-    font:600 13px var(--sans);
-    padding:8px 14px;border:none;border-radius:8px;cursor:pointer;
+    flex:0 0 auto;min-height:34px;white-space:nowrap;
+    font:600 13.5px var(--sans);
+    padding:6px 13px;border:none;border-radius:7px;cursor:pointer;
     background:transparent;color:var(--ink-dim);
-    transition:all .15s ease;
+    transition:all .15s ease;-webkit-tap-highlight-color:transparent;
   }
   .seg button:hover{color:var(--ink)}
   .seg button.on{background:var(--line-c);color:var(--navy);font-weight:800;
@@ -101,18 +109,18 @@
   .keyrow{display:flex;gap:8px}
   .keyrow[hidden],.hint[hidden]{display:none}
   .keyrow input{
-    flex:1;min-width:0;
-    font:14px var(--mono);
+    flex:1;min-width:0;min-height:46px;
+    font:16px var(--mono);                 /* 16px : évite le zoom auto iOS au focus */
     padding:10px 12px;border-radius:9px;
-    background:#fff;border:1px solid #cdd5e2;color:var(--ink);
+    background:var(--panel);border:1px solid #cdd5e2;color:var(--ink);
   }
   .keyrow input::placeholder{color:#9aa6ba}
   .keyrow input:focus{outline:2px solid var(--navy);outline-offset:1px;border-color:var(--navy)}
   button.go{
-    font:700 14px var(--sans);
-    padding:10px 18px;border-radius:9px;border:none;cursor:pointer;
+    font:700 15px var(--sans);
+    min-height:46px;padding:10px 20px;border-radius:9px;border:none;cursor:pointer;
     background:var(--navy);color:#fff;
-    transition:transform .1s ease;
+    transition:transform .1s ease;-webkit-tap-highlight-color:transparent;
   }
   button.go:hover{transform:translateY(-1px)}
   button.go:focus-visible{outline:2px solid var(--line-c);outline-offset:2px}
@@ -121,18 +129,26 @@
 
   /* Direction : pilules rondes, l'etat actif en bleu marine */
   .filters[hidden]{display:none}
-  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chips{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;
+         scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:1px}
+  .chips::-webkit-scrollbar{display:none}
 
+  /* 4 colonnes conservées même sur petit écran (aucune info masquée).
+     Heure et Attente ont une largeur fixe → les chiffres s'alignent
+     verticalement d'une ligne à l'autre (chaque .dep est sa propre grille). */
   .board-head{
-    display:grid;grid-template-columns:64px 1fr 92px 86px;gap:10px;
-    padding:9px 16px;font-size:10.5px;font-weight:700;letter-spacing:.14em;
+    display:grid;grid-template-columns:50px minmax(0,1fr) 54px 60px;gap:9px;
+    padding:9px max(16px,env(safe-area-inset-right)) 9px max(16px,env(safe-area-inset-left));
+    font-size:10px;font-weight:700;letter-spacing:.1em;
     text-transform:uppercase;color:var(--ink-dim);
     background:#f0f2f6;border-bottom:1px solid var(--border);
   }
-  .rows{min-height:120px}
+  .board-head span:nth-child(3),.board-head span:nth-child(4){text-align:right}
+  .rows{flex:1;min-height:120px}
   .dep{
-    display:grid;grid-template-columns:64px 1fr 92px 86px;gap:10px;align-items:center;
-    padding:13px 16px;border-bottom:1px solid var(--border);
+    display:grid;grid-template-columns:50px minmax(0,1fr) 54px 60px;gap:9px;align-items:center;
+    padding:13px max(16px,env(safe-area-inset-right)) 13px max(16px,env(safe-area-inset-left));
+    border-bottom:1px solid var(--border);
     animation:slide .25s ease both;
   }
   .dep:nth-child(odd){background:var(--row-alt)}
@@ -146,7 +162,7 @@
   }
   .dest{font-weight:700;font-size:15px;line-height:1.25}
   .dest small{display:block;font-weight:500;font-size:11.5px;color:var(--ink-dim);margin-top:2px}
-  .hor{font:700 17px var(--mono);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+  .hor{font:700 16px var(--mono);letter-spacing:.02em;text-align:right;font-variant-numeric:tabular-nums}
   .wait{font:700 15px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
   .wait .min{font-size:11px;color:var(--ink-dim);font-weight:500;margin-left:3px}
   .wait .now{color:var(--ok)}
@@ -167,21 +183,67 @@
 
   footer{
     display:flex;justify-content:space-between;align-items:center;gap:10px;
-    padding:11px 16px;font-size:11.5px;color:var(--ink-dim);
+    padding:11px max(16px,env(safe-area-inset-right)) max(11px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+    font-size:11.5px;color:var(--ink-dim);
     border-top:1px solid var(--border);flex-wrap:wrap;
+    background:var(--panel);
   }
   .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#c2cbda;margin-right:6px;vertical-align:1px}
   .dot.live{background:var(--ok)}
   footer button{
+    min-height:32px;
     background:none;border:1px solid #cdd5e2;color:var(--ink-dim);
     font:600 11.5px var(--sans);padding:5px 10px;border-radius:7px;cursor:pointer;
   }
   footer button:hover{color:var(--ink);border-color:var(--navy)}
 
-  @media (max-width:480px){
-    .board-head,.dep{grid-template-columns:52px 1fr 78px}
-    .board-head span:nth-child(3),.hor{display:none}
-    .clock{font-size:18px}
+  /* Très petits écrans : on resserre sans rien masquer */
+  @media (max-width:360px){
+    .board-head,.dep{grid-template-columns:46px minmax(0,1fr) 48px 56px;gap:7px}
+    .hor{font-size:15px}
+    .wait{font-size:14px}
+    .head-txt h1{font-size:15px}
+  }
+
+  /* Tablette / desktop : on recentre la carte (progressive enhancement) */
+  @media (min-width:600px){
+    body{display:flex;justify-content:center;padding:24px 16px 48px}
+    .app{max-width:680px;min-height:0}
+    header{
+      position:static;padding:14px 16px;
+      border:1px solid var(--border);border-bottom:3px solid var(--line-c);
+      border-radius:var(--radius) var(--radius) 0 0;
+    }
+    .panel{
+      flex:none;
+      border:1px solid var(--border);border-top:none;
+      border-radius:0 0 var(--radius) var(--radius);
+      box-shadow:0 8px 24px rgba(27,36,64,.06);
+    }
+    .controls,.board-head,.dep,footer{padding-left:16px;padding-right:16px}
+    .rows{flex:none}
+  }
+
+  /* Mode sombre (OLED iPhone) — déclenché par le réglage système */
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0b0f1d;--panel:#141a2e;--ink:#e8ecf5;--ink-dim:#9aa6c0;
+      --border:#26304a;--row-alt:#1a2138;--navy:#e8ecf5;
+      --ok:#3ecb80;--warn:#e0a23c;--bad:#f06b75;
+    }
+    body{background:var(--bg)}
+    .mission,.seg button.on{color:#1b2440}        /* texte foncé sur jaune */
+    .seg{background:#10162a}
+    .chip{border-color:#33405f}
+    .chip.on{background:#e8ecf5;color:#0b0f1d;border-color:#e8ecf5}
+    .keyrow input{border-color:#33405f}
+    button.go{background:#e8ecf5;color:#0b0f1d}
+    .board-head{background:#10162a}
+    footer button{border-color:#33405f}
+    .badge.delayed{background:#3a2c12}
+    .badge.cancelled{background:#3a1c1c}
+    .badge.atstop{background:#123420}
+    .err{background:#341a1f;border-color:#5a2b33;color:#ffb3bd}
   }
 </style>
 </head>
@@ -251,7 +313,8 @@
   // l'autre sont \u00e9cart\u00e9s.
   const ST_BFM  = { key:'BFM', label:'Biblioth\u00e8que Fran\u00e7ois Mitterrand', match:/mitterrand/i,
                     via:[ST_ORLY, ST_VLR] };
-  const STATIONS = [ST_ORLY, ST_PDR, ST_VLR, ST_BFM];
+  const ST_BOUL = { key:'BOUL', label:'Boulainvilliers', match:/boulainvilliers/i };
+  const STATIONS = [ST_ORLY, ST_PDR, ST_VLR, ST_BFM, ST_BOUL];
 
   // Directions fixes propos\u00e9es pour chaque gare
   ST_ORLY.dirs = [
@@ -270,6 +333,13 @@
     { label:'Austerlitz',        test:v => isParisBound(v.dest) },
     { label:'Orly Ville',        test:v => v.serves && v.serves.has('ORLY') },
     { label:'Villeneuve-le-Roi', test:v => v.serves && v.serves.has('VLR') },
+  ];
+  // À Boulainvilliers (branche VMI), un sens part vers le nord-ouest (Pontoise /
+  // Ermont) et l'autre vers le centre de Paris (Invalides puis Austerlitz / sud).
+  const NW_BOUND = /pontoise|montigny|beauchamp|ermont|eaubonne/i;
+  ST_BOUL.dirs = [
+    { label:'Invalides / Austerlitz', test:v => !NW_BOUND.test(v.dest) },
+    { label:'Pontoise / Ermont',      test:v => NW_BOUND.test(v.dest) },
   ];
 
   let current = STATIONS[0];
@@ -366,6 +436,12 @@
     const url = `${PRIM}?MonitoringRef=${encodeURIComponent(ref)}&LineRef=${encodeURIComponent(LINE_REF)}`;
     const r = await smartFetch(url, { headers: { apikey: apiKey } });
     if (r.status === 401 || r.status === 403) throw new Error('AUTH');
+    if (r.status === 429){
+      const ra = parseInt(r.headers.get('Retry-After'), 10);
+      const err = new Error('RATE');
+      err.retryMs = (Number.isFinite(ra) && ra > 0 ? ra : 30) * 1000;
+      throw err;
+    }
     if (!r.ok) throw new Error('PRIM ' + r.status);
     const data = await readJson(r);
     const deliveries = data?.Siri?.ServiceDelivery?.StopMonitoringDelivery || [];
@@ -404,7 +480,12 @@
     const usable = targets.filter(t => t.monitoringRef);
     if (!usable.length) { viaFilterDown = true; return list; }
     try {
-      const boards = await Promise.all(usable.map(t => fetchDepartures(t.monitoringRef, 2 * 60 * 60_000)));
+      // Appels séquentiels (et non simultanés) pour ne pas saturer le quota PRIM (429).
+      const boards = [];
+      for (let i = 0; i < usable.length; i++){
+        if (i) await new Promise(res => setTimeout(res, 350));
+        boards.push(await fetchDepartures(usable[i].monitoringRef, 2 * 60 * 60_000));
+      }
       boards.forEach((board, i) => {
         const at = new Map(board.filter(c => c.ref).map(c => [c.ref, c.time.getTime()]));
         for (const v of list){
@@ -477,7 +558,7 @@
   /* \u2500\u2500 Cycle de chargement \u2500\u2500 */
   async function load(){
     setStatus('Chargement\u2026', false);
-    rows.innerHTML = '<div class="empty">Interrogation du r\u00e9seau\u2026</div>';
+    if (!allVisits.length) rows.innerHTML = '<div class="empty">Interrogation du r\u00e9seau\u2026</div>';
     clearError();
     try {
       await resolveStops();
@@ -500,6 +581,12 @@
         showError("Cl\u00e9 API refus\u00e9e (401/403). V\u00e9rifiez votre jeton PRIM \u2014 il doit \u00eatre actif et copi\u00e9 sans espace.");
       } else if (e.message === 'STOP'){
         showError("Impossible de retrouver l'identifiant de cette gare dans l'open data IDFM. R\u00e9essayez dans un instant.");
+      } else if (e.message === 'RATE'){
+        const ms = e.retryMs || 30_000, secs = Math.max(5, Math.round(ms / 1000));
+        showError("Trop d'appels vers l'API PRIM (429) \u2014 la cl\u00e9 gratuite est limit\u00e9e en nombre de requ\u00eates. Nouvel essai automatique dans " + secs + "\u202fs.");
+        setStatus('Limite atteinte', false);
+        timer = setTimeout(load, ms);   // relance diff\u00e9r\u00e9e ; les horaires d\u00e9j\u00e0 charg\u00e9s restent affich\u00e9s
+        return;
       } else if (e instanceof TypeError){
         showError("Appels r\u00e9seau bloqu\u00e9s par l'environnement. C'est normal dans l'aper\u00e7u int\u00e9gr\u00e9 de Claude, qui interdit toute requ\u00eate externe. <strong>T\u00e9l\u00e9chargez ce fichier HTML et ouvrez-le directement dans votre navigateur</strong> : l'app appellera alors l'API directement, avec repli automatique via un proxy si n\u00e9cessaire.");
       } else {
