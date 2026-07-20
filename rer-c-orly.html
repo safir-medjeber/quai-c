@@ -305,15 +305,22 @@
   const LINE_REF = 'STIF:Line::' + LINE_ID + ':';
   const ODS = 'https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/arrets-lignes/records';
   const PRIM = 'https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring';
-  const ST_ORLY = { key:'ORLY', label:'Orly Ville',        match:/orly[\s-]?ville/i };
-  const ST_PDR  = { key:'PDR',  label:'Pont de Rungis',    match:/pont[\s-]?de[\s-]?rungis/i };
-  const ST_VLR  = { key:'VLR',  label:'Villeneuve-le-Roi', match:/villeneuve[\s-]?le[\s-]?roi/i };
+  // monitoringRef : identifiant de zone d'arr\u00eat (ZdA) IDFM connu en dur,
+  // pour que l'app fonctionne m\u00eame quand l'open data est indisponible
+  // (le dataset \u00ab arrets-lignes \u00bb s'est d\u00e9j\u00e0 retrouv\u00e9 vide plusieurs jours).
+  const ST_ORLY = { key:'ORLY', label:'Orly Ville',        match:/orly[\s-]?ville/i,
+                    monitoringRef:'STIF:StopArea:SP:46299:' };
+  const ST_PDR  = { key:'PDR',  label:'Pont de Rungis',    match:/pont[\s-]?de[\s-]?rungis/i,
+                    monitoringRef:'STIF:StopArea:SP:47907:' };
+  const ST_VLR  = { key:'VLR',  label:'Villeneuve-le-Roi', match:/villeneuve[\s-]?le[\s-]?roi/i,
+                    monitoringRef:'STIF:StopArea:SP:46307:' };
   // \u00c0 BFM : trains vers Austerlitz (nord) + trains desservant Orly Ville ou
   // Villeneuve-le-Roi (sud) ; les semi-directs qui ne desservent ni l'une ni
   // l'autre sont \u00e9cart\u00e9s.
   const ST_BFM  = { key:'BFM', label:'Biblioth\u00e8que Fran\u00e7ois Mitterrand', match:/mitterrand/i,
-                    via:[ST_ORLY, ST_VLR] };
-  const ST_BOUL = { key:'BOUL', label:'Boulainvilliers', match:/boulainvilliers/i };
+                    via:[ST_ORLY, ST_VLR], monitoringRef:'STIF:StopArea:SP:45301:' };
+  const ST_BOUL = { key:'BOUL', label:'Boulainvilliers', match:/boulainvilliers/i,
+                    monitoringRef:'STIF:StopArea:SP:45453:' };
   const STATIONS = [ST_ORLY, ST_PDR, ST_VLR, ST_BFM, ST_BOUL];
 
   // Directions fixes propos\u00e9es pour chaque gare
@@ -412,23 +419,28 @@
     });
   }
 
-  /* \u2500\u2500 R\u00e9solution des arr\u00eats via l'open data IDFM (sans cl\u00e9) \u2500\u2500 */
+  /* \u2500\u2500 Rafra\u00eechissement des arr\u00eats via l'open data IDFM (sans cl\u00e9) \u2500\u2500
+     Les gares portent d\u00e9j\u00e0 leur identifiant en dur ; l'open data ne sert
+     qu'\u00e0 le mettre \u00e0 jour s'il change dans le r\u00e9f\u00e9rentiel. Une panne ou un
+     dataset vide (d\u00e9j\u00e0 vu) n'est donc plus bloquante : on garde les
+     identifiants connus et on continue. */
   let stopsResolved = false;
   async function resolveStops(){
     if (stopsResolved) return;
-    const where = encodeURIComponent(`id="IDFM:${LINE_ID}"`);
-    const url = `${ODS}?where=${where}&limit=100&select=stop_id,stop_name`;
-    const r = await smartFetch(url);
-    if (!r.ok) throw new Error('open data ' + r.status);
-    const data = await readJson(r);
-    const list = data.results || [];
-    for (const s of STATIONS){
-      const hit = list.find(x => s.match.test(x.stop_name || ''));
-      const num = hit && String(hit.stop_id || '').match(/(\d+)\s*$/);
-      if (num) s.monitoringRef = `STIF:StopArea:SP:${num[1]}:`;
-    }
-    if (!STATIONS.some(s => s.monitoringRef)) throw new Error('STOP');
-    stopsResolved = true;
+    stopsResolved = true;    // une seule tentative par session, succ\u00e8s ou non
+    try {
+      const where = encodeURIComponent(`id="IDFM:${LINE_ID}"`);
+      const url = `${ODS}?where=${where}&limit=100&select=stop_id,stop_name`;
+      const r = await smartFetch(url);
+      if (!r.ok) return;
+      const data = await readJson(r);
+      const list = data.results || [];
+      for (const s of STATIONS){
+        const hit = list.find(x => s.match.test(x.stop_name || ''));
+        const num = hit && String(hit.stop_id || '').match(/(\d+)\s*$/);
+        if (num) s.monitoringRef = `STIF:StopArea:SP:${num[1]}:`;
+      }
+    } catch (e) { /* identifiants en dur conserv\u00e9s */ }
   }
 
   /* \u2500\u2500 Appel PRIM \u2500\u2500 */
